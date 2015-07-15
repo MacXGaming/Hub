@@ -11,8 +11,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -23,24 +21,6 @@ public class hubmc extends JavaPlugin implements Listener {
   public void onEnable() {
     saveDefaultConfig();
     Bukkit.getPluginManager().registerEvents(this, this);
-  }
-  @EventHandler
-  public void onEntityDamage(EntityDamageEvent e) {
-	  if (getConfig().getBoolean("voidspawn")) {
-		  Player p = (Player) e.getEntity();
-	      if(e.getEntity() instanceof Player) {
-	          if (DamageCause.VOID != null){
-	        	  World w = Bukkit.getServer().getWorld(getConfig().getString("spawn.world"));
-	              double x = getConfig().getDouble("spawn.x");
-	              double y = getConfig().getDouble("spawn.y");
-	              double z = getConfig().getDouble("spawn.z");
-	              float yaw = (float)getConfig().getDouble("spawn.yaw");
-	              float pitch = (float)getConfig().getDouble("spawn.pitch");
-	              p.teleport(new Location(w, x, y, z, yaw, pitch));
-	              e.setDamage(0);
-	          }
-	      }
-	  }
   }
   @EventHandler
   public void onPlayerJoin(PlayerJoinEvent e) {
@@ -63,18 +43,22 @@ public class hubmc extends JavaPlugin implements Listener {
   public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
     Player p = (Player)sender;
     if (cmd.getName().equalsIgnoreCase("hsetspawn")) {
-      getConfig().set("spawn.world", p.getLocation().getWorld().getName());
-      getConfig().set("spawn.x", Double.valueOf(p.getLocation().getX()));
-      getConfig().set("spawn.y", Double.valueOf(p.getLocation().getY()));
-      getConfig().set("spawn.z", Double.valueOf(p.getLocation().getZ()));
-      getConfig().set("spawn.yaw", Float.valueOf(p.getLocation().getYaw()));
-      getConfig().set("spawn.pitch", Float.valueOf(p.getLocation().getPitch()));
-      saveConfig();
-      p.sendMessage(ChatColor.GREEN + "Spawn set!");
-      getLogger().info("Hub Spawn set!");
+    	if(p.isOp()){
+			getConfig().set("spawn.world", p.getLocation().getWorld().getName());
+			getConfig().set("spawn.x", Double.valueOf(p.getLocation().getX()));
+			getConfig().set("spawn.y", Double.valueOf(p.getLocation().getY()));
+			getConfig().set("spawn.z", Double.valueOf(p.getLocation().getZ()));
+			getConfig().set("spawn.yaw", Float.valueOf(p.getLocation().getYaw()));
+			getConfig().set("spawn.pitch", Float.valueOf(p.getLocation().getPitch()));
+			saveConfig();
+			p.sendMessage(ChatColor.GREEN + "Spawn set!");
+			getLogger().info("Hub Spawn set!");
+    	}else{
+    		p.sendMessage("&cYou dont have the permission");
+    	}
     }
-    if (cmd.getName().equalsIgnoreCase("hreload")) {
-      if (p.isOp()) {
+    if(cmd.getName().equalsIgnoreCase("hreload")) {
+      if(p.isOp()){
         saveConfig();
         reloadConfig();
         p.sendMessage(ChatColor.GREEN + "Reloaded the config.yml");
