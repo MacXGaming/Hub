@@ -17,7 +17,12 @@ permissions:
   hubmc.admin:
     description: Get acces to /hsetspawn and /hreload
     default: false
-  hubmc.magic:
+  hubmc.mc.always:
     description: Get acces always visible
     default: false    
- 
+  hubmc.block.override:
+    description: Get acces to all blocked commands
+    default: false      
+  hubmc.inv.move:
+    description: Get able to move items in inventory
+    default: false          

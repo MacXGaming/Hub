@@ -18,6 +18,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -32,6 +34,8 @@ import org.bukkit.util.Vector;
 
 public class hubmc extends JavaPlugin implements Listener {
 	private ArrayList<String> usingClock;
+
+	
 	public void onEnable() {
 	  Bukkit.getPluginManager().registerEvents(this, this);
 	  if (getConfig().getBoolean("magicclock")) { this.usingClock = new ArrayList<String>(); }
@@ -111,15 +115,26 @@ public class hubmc extends JavaPlugin implements Listener {
 	/***** BLOCKED CMD *****/
 	@EventHandler(priority=EventPriority.HIGHEST)
 	public void onCommand(PlayerCommandPreprocessEvent event) {
-		String command = event.getMessage();
-		for (int i = 0; i < getConfig().getList("blocked-cmds").size(); i++) {
-			String playercommand = (String)getConfig().getList("blocked-cmds").get(i);
-			if (command.toUpperCase().contains("/" + playercommand.toUpperCase())) {
-				Player p = event.getPlayer();
-				p.sendMessage(getConfig().getString("no-perm-message").replaceAll("&", "§"));
-				event.setCancelled(true);
+		if((!event.getPlayer().hasPermission("hubmc.block.override"))) {
+			String command = event.getMessage();
+			for (int i = 0; i < getConfig().getList("blocked-cmds").size(); i++) {
+				String playercommand = (String)getConfig().getList("blocked-cmds").get(i);
+				if (command.toUpperCase().contains("/" + playercommand.toUpperCase())) {
+					Player p = event.getPlayer();
+					p.sendMessage(getConfig().getString("no-perm-message").replaceAll("&", "§"));
+					event.setCancelled(true);
+				}
 			}
 		}
+	}
+	/***** NO INV MOVE *****/
+	@EventHandler
+	public void onInventoryClick(InventoryClickEvent event) {
+		if(event.getWhoClicked().hasPermission("hubmc.inv.move")){event.setCancelled(true);}
+	}
+	@EventHandler
+	public void onInventoryDrag(InventoryDragEvent event) {
+		if(event.getWhoClicked().hasPermission("hubmc.inv.move")){event.setCancelled(true);}
 	}
 	/***** NO DROP *****/
 	@EventHandler
@@ -153,7 +168,7 @@ public class hubmc extends JavaPlugin implements Listener {
 			!e.getItem().hasItemMeta() ||
 			!e.getItem().getItemMeta().hasDisplayName() ||
 			!e.getItem().getItemMeta().getDisplayName().equals(getConfig().getString("clockitemname").replaceAll("&", "§"))
-			) { return; }
+			) { return; }			
 			if (usingClock.contains(e.getPlayer().getName())) {
 				usingClock.remove(e.getPlayer().getName());
 				player.sendMessage(getConfig().getString("show-players-message").replaceAll("&", "§"));
@@ -225,7 +240,7 @@ public class hubmc extends JavaPlugin implements Listener {
 			  }
 		  }
 		  /***** DOUBLE JUMP *****/
-		  if (getConfig().getBoolean("doublejump") && (event.getPlayer().hasPermission("hubmc.use"))) {
+		  if (getConfig().getBoolean("doublejump") && (event.getPlayer().hasPermission("hubmc.use")) && (event.getPlayer().getGameMode() != GameMode.CREATIVE)) {
 			  if ((event.getPlayer().getGameMode() != GameMode.CREATIVE) && (event.getPlayer().getLocation().getBlock().getRelative(BlockFace.DOWN).getType() != Material.AIR)) {
 		      event.getPlayer().setAllowFlight(true);
 		  }
@@ -234,7 +249,7 @@ public class hubmc extends JavaPlugin implements Listener {
 	  @EventHandler
 	  public void onFly(PlayerToggleFlightEvent event)
 	  {
-		  if (getConfig().getBoolean("doublejump") && (event.getPlayer().hasPermission("hubmc.use"))) {
+		  if (getConfig().getBoolean("doublejump") && (event.getPlayer().hasPermission("hubmc.use")) && (event.getPlayer().getGameMode() != GameMode.CREATIVE)) {
 		      Player player = event.getPlayer();
 		      event.setCancelled(true);
 		      player.setAllowFlight(false);
@@ -242,25 +257,4 @@ public class hubmc extends JavaPlugin implements Listener {
 		      player.setVelocity(player.getLocation().getDirection().multiply(1.6D).setY(1.0D));
 		  }
 	  }
-	  
-	  
-
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	
-	  
-	  
-	  
-	  
-	  
-	  
 }
