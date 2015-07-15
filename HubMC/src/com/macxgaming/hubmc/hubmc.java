@@ -26,33 +26,29 @@ public class hubmc extends JavaPlugin implements Listener {
   }
   @EventHandler
   public void onEntityDamage(EntityDamageEvent e) {
-	  Player p = (Player) e.getEntity();
-      if(e.getEntity() instanceof Player) {
-          e.getCause();
-          if (DamageCause.VOID != null){
-        	  World w = Bukkit.getServer().getWorld(getConfig().getString("spawn.world"));
-              double x = getConfig().getDouble("spawn.x");
-              double y = getConfig().getDouble("spawn.y");
-              double z = getConfig().getDouble("spawn.z");
-              float yaw = (float)getConfig().getDouble("spawn.yaw");
-              float pitch = (float)getConfig().getDouble("spawn.pitch");
-              p.teleport(new Location(w, x, y, z, yaw, pitch));
-              e.setDamage(0);
-          }
-      }
+	  if (getConfig().getBoolean("voidspawn")) {
+		  Player p = (Player) e.getEntity();
+	      if(e.getEntity() instanceof Player) {
+	          if (DamageCause.VOID != null){
+	        	  World w = Bukkit.getServer().getWorld(getConfig().getString("spawn.world"));
+	              double x = getConfig().getDouble("spawn.x");
+	              double y = getConfig().getDouble("spawn.y");
+	              double z = getConfig().getDouble("spawn.z");
+	              float yaw = (float)getConfig().getDouble("spawn.yaw");
+	              float pitch = (float)getConfig().getDouble("spawn.pitch");
+	              p.teleport(new Location(w, x, y, z, yaw, pitch));
+	              e.setDamage(0);
+	          }
+	      }
+	  }
   }
   @EventHandler
-  public void onPlayerJoin(PlayerJoinEvent e)
-  {
-    if (getConfig().getBoolean("forcespawn"))
-    {
+  public void onPlayerJoin(PlayerJoinEvent e) {
+    if (getConfig().getBoolean("forcespawn")) {
       Player p = e.getPlayer();
-      if (getConfig().getConfigurationSection("spawn") == null)
-      {
+      if (getConfig().getConfigurationSection("spawn") == null) {
         p.sendMessage(ChatColor.RED + "The spawn has not yet been set!");
-      }
-      else
-      {
+      }else{
         World w = Bukkit.getServer().getWorld(getConfig().getString("spawn.world"));
         double x = getConfig().getDouble("spawn.x");
         double y = getConfig().getDouble("spawn.y");
@@ -64,11 +60,9 @@ public class hubmc extends JavaPlugin implements Listener {
     }
   }
   
-  public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args)
-  {
+  public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
     Player p = (Player)sender;
-    if (cmd.getName().equalsIgnoreCase("hsetspawn"))
-    {
+    if (cmd.getName().equalsIgnoreCase("hsetspawn")) {
       getConfig().set("spawn.world", p.getLocation().getWorld().getName());
       getConfig().set("spawn.x", Double.valueOf(p.getLocation().getX()));
       getConfig().set("spawn.y", Double.valueOf(p.getLocation().getY()));
@@ -79,10 +73,8 @@ public class hubmc extends JavaPlugin implements Listener {
       p.sendMessage(ChatColor.GREEN + "Spawn set!");
       getLogger().info("Hub Spawn set!");
     }
-    if (cmd.getName().equalsIgnoreCase("hreload"))
-    {
-      if (p.isOp())
-      {
+    if (cmd.getName().equalsIgnoreCase("hreload")) {
+      if (p.isOp()) {
         saveConfig();
         reloadConfig();
         p.sendMessage(ChatColor.GREEN + "Reloaded the config.yml");
@@ -96,14 +88,11 @@ public class hubmc extends JavaPlugin implements Listener {
   }
   
   @EventHandler(priority=EventPriority.HIGHEST)
-  public void onCommand(PlayerCommandPreprocessEvent event)
-  {
+  public void onCommand(PlayerCommandPreprocessEvent event) {
     String command = event.getMessage();
-    for (int i = 0; i < getConfig().getList("blocked-cmds").size(); i++)
-    {
+    for (int i = 0; i < getConfig().getList("blocked-cmds").size(); i++) {
       String playercommand = (String)getConfig().getList("blocked-cmds").get(i);
-      if (command.toUpperCase().contains("/" + playercommand.toUpperCase()))
-      {
+      if (command.toUpperCase().contains("/" + playercommand.toUpperCase())) {
         Player p = event.getPlayer();
         p.sendMessage(getConfig().getString("blocked-cmd-message").replaceAll("&", "§"));
         event.setCancelled(true);
@@ -112,24 +101,19 @@ public class hubmc extends JavaPlugin implements Listener {
   }
   
   @EventHandler
-  public void onPlayerDropItem(PlayerDropItemEvent event)
-  {
+  public void onPlayerDropItem(PlayerDropItemEvent event) {
     if (getConfig().getBoolean("nodrop")) {
       event.setCancelled(true);
     }
   }
   @EventHandler(priority=EventPriority.HIGHEST)
-  public void rain(WeatherChangeEvent e)
-  {
+  public void rain(WeatherChangeEvent e) {
     if ((getConfig().getBoolean("weather")) && 
-      (e.toWeatherState()))
-    {
+      (e.toWeatherState())) {
       List<String> worlds = getConfig().getStringList("worlds");
-      for (String w : worlds)
-      {
+      for (String w : worlds) {
         World world = Bukkit.getServer().getWorld(w);
-        if (e.getWorld().equals(world))
-        {
+        if (e.getWorld().equals(world)) {
           e.setCancelled(true);
           world.setStorm(false);
         }

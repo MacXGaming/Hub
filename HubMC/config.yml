@@ -3,6 +3,7 @@ worlds:
 weather: true
 nodrop: true
 forcespawn: true
+voidspawn: true
 
 blocked-cmds:
     - op
