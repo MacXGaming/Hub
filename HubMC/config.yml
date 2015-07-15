@@ -1,0 +1,10 @@
+worlds:
+    - world
+weather: true
+nodrop: true
+forcespawn: true
+
+blocked-cmds:
+    - op
+    
+blocked-cmd-message: "&4This command is blocked!"

@@ -1,0 +1,12 @@
+main: com.macxgaming.hubmc.hubmc
+version: 1.0
+name: HubMC
+author: MacXGaming
+commands:
+    hsetspawn:
+        usage: /<command>
+        aliases: [sspawn]
+        description: Set the spawn.
+    hreload:
+        usage: /<command>
+        description: Reload config
