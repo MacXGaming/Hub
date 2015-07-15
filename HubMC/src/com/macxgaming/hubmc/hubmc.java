@@ -1,9 +1,11 @@
 package com.macxgaming.hubmc;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -11,17 +13,29 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
 
 public class hubmc extends JavaPlugin implements Listener {
+	private ArrayList<String> usingClock;
+	
 	public void onEnable() {
-	  saveDefaultConfig();
 	  Bukkit.getPluginManager().registerEvents(this, this);
+	  if (getConfig().getBoolean("magicclock")) { this.usingClock = new ArrayList<String>(); }
+	  getConfig().options().copyDefaults(true);
+	  saveConfig();
 	}
+		 
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent e) {
 		if (getConfig().getBoolean("forcespawn")) {
@@ -38,8 +52,27 @@ public class hubmc extends JavaPlugin implements Listener {
 				p.teleport(new Location(w, x, y, z, yaw, pitch));
 			}
 		}
+		if (getConfig().getBoolean("magicclock")) {
+	        ItemStack magicClock = new ItemStack(Material.WATCH, 1);
+	       
+	        ItemMeta magicClockMeta = magicClock.getItemMeta();
+	        magicClockMeta.setDisplayName(getConfig().getString("clockitemname").replaceAll("&", "§"));
+	        magicClock.setItemMeta(magicClockMeta);
+	       
+	        e.getPlayer().getInventory().setItem(getConfig().getInt("clockslot"),magicClock);
+	       
+	        for (Player p : Bukkit.getServer().getOnlinePlayers()) {
+	                if (p != e.getPlayer()) {
+	                        if (usingClock.contains(p.getName())) {
+	                                p.hidePlayer(e.getPlayer()); // If they are currently using the clock, hide the new player. 
+	                        }
+	                        else {
+	                                p.showPlayer(e.getPlayer()); // Else, show the new player.
+	                        }
+	                }
+	        }
+		}
 	}
-  
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
 		Player p = (Player)sender;
 		if (cmd.getName().equalsIgnoreCase("hsetspawn")) {
@@ -82,13 +115,14 @@ public class hubmc extends JavaPlugin implements Listener {
 				event.setCancelled(true);
 			}
 		}
-	} 
+	}
 	@EventHandler
 	public void onPlayerDropItem(PlayerDropItemEvent event) {
 		if (getConfig().getBoolean("nodrop")) {
 			event.setCancelled(true);
 		}
 	}
+
 	@EventHandler(priority=EventPriority.HIGHEST)
 	public void rain(WeatherChangeEvent e) {
 		if ((getConfig().getBoolean("weather")) && (e.toWeatherState())) {
@@ -99,6 +133,69 @@ public class hubmc extends JavaPlugin implements Listener {
 					e.setCancelled(true);
 					world.setStorm(false);
 				}
+			}
+		}
+	}
+	/***** MAGIC CLOCK *****/
+	@EventHandler
+	public void onPlayerInteract(PlayerInteractEvent e) {
+		if (getConfig().getBoolean("magicclock")) {
+			Player player = e.getPlayer();
+			if (e.getAction() != Action.RIGHT_CLICK_AIR && e.getAction() != Action.RIGHT_CLICK_BLOCK) { return; }
+			if (e.getItem().getType() != Material.WATCH) { return; }
+			if (
+			!e.getItem().hasItemMeta() ||
+			!e.getItem().getItemMeta().hasDisplayName() ||
+			!e.getItem().getItemMeta().getDisplayName().equals(getConfig().getString("clockitemname").replaceAll("&", "§"))
+			) { return; }
+			if (usingClock.contains(e.getPlayer().getName())) {
+				usingClock.remove(e.getPlayer().getName());
+				player.sendMessage(getConfig().getString("show-players-message").replaceAll("&", "§"));
+				for (Player p : Bukkit.getServer().getOnlinePlayers()) {
+					if (p != e.getPlayer()) {
+						e.getPlayer().showPlayer(p);
+					}
+				}
+			}else{
+				usingClock.add(e.getPlayer().getName());
+				player.sendMessage(getConfig().getString("hide-players-message").replaceAll("&", "§"));
+				for (Player p : Bukkit.getServer().getOnlinePlayers()) {
+					if (p != e.getPlayer()) {
+					e.getPlayer().hidePlayer(p);
+					}
+				}
+			}
+		}
+	}
+	/***** JUMPPAD *****/
+	@EventHandler
+	  public void onPlayerMove(PlayerMoveEvent event) {
+		if (getConfig().getBoolean("jumppads")) {
+		    Player player = event.getPlayer();
+		    Location playerLoc = player.getLocation();
+		    int ID = playerLoc.getWorld().getBlockAt(playerLoc)
+		      .getRelative(0, -1, 0).getTypeId();
+		    int plate = playerLoc.getWorld().getBlockAt(playerLoc).getTypeId();
+		    if (((player instanceof Player)) && 
+		      (ID == getConfig().getInt("BottomBlockId")) && 
+		      (plate == getConfig().getInt("JumpPadID")))
+		    {
+		      player.setVelocity(player.getLocation().getDirection()
+		        .multiply(getConfig().getInt("VelocityMultiplier")));
+		      player.setVelocity(new Vector(player.getVelocity().getX(), 
+		        1.0D, player.getVelocity().getZ()));
+		    }
+		}
+	  }
+	/***** NO FALL DAMAGE *****/
+	@EventHandler
+	public void onEntityDamage(EntityDamageEvent event) {
+		if (getConfig().getBoolean("no-fall-damage")) {
+			if (!(event.getEntity() instanceof Player)) {
+				return;
+			}
+			if ((event.getCause().equals(EntityDamageEvent.DamageCause.FALL))) {
+				event.setCancelled(true);
 			}
 		}
 	}
