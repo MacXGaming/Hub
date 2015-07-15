@@ -6,12 +6,15 @@ forcespawn: true # Do you wan't to get to spawn every time you log in?
 no-fall-damage: true # Do you wan't no fall damage?
 jumppads: true # Should jumppads be activated?
 magicclock: true # Do you wan't the magic clock?
+doublejump: true #Do you wan't double jump?
+void: true # Do you wan't tp when void?
 
 JumpPadID: 70 # Stone Plate
 BottomBlockId: 2 # Dirt
 VelocityMultiplier: 3 
 clockitemname: "&4Magic Clock" # ClockName
 clockslot: 5 # What slot to be in? 0-xx
+voidY: 10 # Y, when should we TP a player?
 
 show-players-message: "&2Players are visible!"
 hide-players-message: "&4Players are invisible!"

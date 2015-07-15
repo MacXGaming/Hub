@@ -2,11 +2,14 @@ package com.macxgaming.hubmc;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.BlockFace;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -20,6 +23,7 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -28,7 +32,6 @@ import org.bukkit.util.Vector;
 
 public class hubmc extends JavaPlugin implements Listener {
 	private ArrayList<String> usingClock;
-	
 	public void onEnable() {
 	  Bukkit.getPluginManager().registerEvents(this, this);
 	  if (getConfig().getBoolean("magicclock")) { this.usingClock = new ArrayList<String>(); }
@@ -52,7 +55,7 @@ public class hubmc extends JavaPlugin implements Listener {
 				p.teleport(new Location(w, x, y, z, yaw, pitch));
 			}
 		}
-		if (getConfig().getBoolean("magicclock")) {
+		if (getConfig().getBoolean("magicclock") && (e.getPlayer().hasPermission("hubmc.use"))) {
 	        ItemStack magicClock = new ItemStack(Material.WATCH, 1);
 	       
 	        ItemMeta magicClockMeta = magicClock.getItemMeta();
@@ -73,9 +76,10 @@ public class hubmc extends JavaPlugin implements Listener {
 	        }
 		}
 	}
+	/***** COMMANDS *****/
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
 		Player p = (Player)sender;
-		if (cmd.getName().equalsIgnoreCase("hsetspawn")) {
+		if (cmd.getName().equalsIgnoreCase("hsetspawn") && (p.hasPermission("hubmc.admin"))) {
 			if(p.isOp()){
 				getConfig().set("spawn.world", p.getLocation().getWorld().getName());
 				getConfig().set("spawn.x", Double.valueOf(p.getLocation().getX()));
@@ -90,7 +94,7 @@ public class hubmc extends JavaPlugin implements Listener {
 				p.sendMessage(getConfig().getString("no-perm-message").replaceAll("&", "§"));
 			}
 		}
-		if(cmd.getName().equalsIgnoreCase("hreload")) {
+		if(cmd.getName().equalsIgnoreCase("hreload") && (p.getPlayer().hasPermission("hubmc.admin"))) {
 			if(p.isOp()){
 				saveConfig();
 				reloadConfig();
@@ -104,6 +108,7 @@ public class hubmc extends JavaPlugin implements Listener {
 		}
 		return true;
 	}
+	/***** BLOCKED CMD *****/
 	@EventHandler(priority=EventPriority.HIGHEST)
 	public void onCommand(PlayerCommandPreprocessEvent event) {
 		String command = event.getMessage();
@@ -116,13 +121,14 @@ public class hubmc extends JavaPlugin implements Listener {
 			}
 		}
 	}
+	/***** NO DROP *****/
 	@EventHandler
 	public void onPlayerDropItem(PlayerDropItemEvent event) {
-		if (getConfig().getBoolean("nodrop")) {
+		if (getConfig().getBoolean("nodrop") && (event.getPlayer().hasPermission("hubmc.use"))) {
 			event.setCancelled(true);
 		}
 	}
-
+	/***** NO RAIN *****/
 	@EventHandler(priority=EventPriority.HIGHEST)
 	public void rain(WeatherChangeEvent e) {
 		if ((getConfig().getBoolean("weather")) && (e.toWeatherState())) {
@@ -139,7 +145,7 @@ public class hubmc extends JavaPlugin implements Listener {
 	/***** MAGIC CLOCK *****/
 	@EventHandler
 	public void onPlayerInteract(PlayerInteractEvent e) {
-		if (getConfig().getBoolean("magicclock")) {
+		if (getConfig().getBoolean("magicclock") && (e.getPlayer().hasPermission("hubmc.use"))) {
 			Player player = e.getPlayer();
 			if (e.getAction() != Action.RIGHT_CLICK_AIR && e.getAction() != Action.RIGHT_CLICK_BLOCK) { return; }
 			if (e.getItem().getType() != Material.WATCH) { return; }
@@ -160,8 +166,8 @@ public class hubmc extends JavaPlugin implements Listener {
 				usingClock.add(e.getPlayer().getName());
 				player.sendMessage(getConfig().getString("hide-players-message").replaceAll("&", "§"));
 				for (Player p : Bukkit.getServer().getOnlinePlayers()) {
-					if (p != e.getPlayer()) {
-					e.getPlayer().hidePlayer(p);
+					if (p != e.getPlayer() && (!e.getPlayer().hasPermission("hubmc.magic"))) {
+						e.getPlayer().hidePlayer(p);
 					}
 				}
 			}
@@ -170,7 +176,7 @@ public class hubmc extends JavaPlugin implements Listener {
 	/***** JUMPPAD *****/
 	@EventHandler
 	  public void onPlayerMove(PlayerMoveEvent event) {
-		if (getConfig().getBoolean("jumppads")) {
+		if (getConfig().getBoolean("jumppads") && (event.getPlayer().hasPermission("hubmc.use"))) {
 		    Player player = event.getPlayer();
 		    Location playerLoc = player.getLocation();
 		    int ID = playerLoc.getWorld().getBlockAt(playerLoc)
@@ -199,4 +205,62 @@ public class hubmc extends JavaPlugin implements Listener {
 			}
 		}
 	}
+	/***** VOID *****/
+	  @EventHandler
+	  public void onMove(PlayerMoveEvent event) {
+		  if (getConfig().getBoolean("void") && (event.getPlayer().hasPermission("hubmc.use"))) {
+			  Player player = event.getPlayer();
+			  if (player.getLocation().getY() < getConfig().getInt("voidY")){
+				  if (getConfig().getConfigurationSection("spawn") == null) {
+						player.sendMessage(ChatColor.RED + "The spawn has not yet been set!");
+					}else{
+						World w = Bukkit.getServer().getWorld(getConfig().getString("spawn.world"));
+						double x = getConfig().getDouble("spawn.x");
+						double y = getConfig().getDouble("spawn.y");
+						double z = getConfig().getDouble("spawn.z");
+						float yaw = (float)getConfig().getDouble("spawn.yaw");
+						float pitch = (float)getConfig().getDouble("spawn.pitch");
+						player.teleport(new Location(w, x, y, z, yaw, pitch));
+					}
+			  }
+		  }
+		  /***** DOUBLE JUMP *****/
+		  if (getConfig().getBoolean("doublejump") && (event.getPlayer().hasPermission("hubmc.use"))) {
+			  if ((event.getPlayer().getGameMode() != GameMode.CREATIVE) && (event.getPlayer().getLocation().getBlock().getRelative(BlockFace.DOWN).getType() != Material.AIR)) {
+		      event.getPlayer().setAllowFlight(true);
+		  }
+	    }
+	  }
+	  @EventHandler
+	  public void onFly(PlayerToggleFlightEvent event)
+	  {
+		  if (getConfig().getBoolean("doublejump") && (event.getPlayer().hasPermission("hubmc.use"))) {
+		      Player player = event.getPlayer();
+		      event.setCancelled(true);
+		      player.setAllowFlight(false);
+		      player.setFlying(false);
+		      player.setVelocity(player.getLocation().getDirection().multiply(1.6D).setY(1.0D));
+		  }
+	  }
+	  
+	  
+
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	
+	  
+	  
+	  
+	  
+	  
+	  
 }

@@ -10,3 +10,14 @@ commands:
     hreload:
         usage: /<command>
         description: Reload config
+permissions:
+  hubmc.use:
+    description: Use Double Jump, VOID, ForceSpawn, Magic Clock and NoDrop
+    default: true
+  hubmc.admin:
+    description: Get acces to /hsetspawn and /hreload
+    default: false
+  hubmc.magic:
+    description: Get acces always visible
+    default: false    
+ 
