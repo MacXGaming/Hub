@@ -35,7 +35,6 @@ import org.bukkit.util.Vector;
 public class hubmc extends JavaPlugin implements Listener {
 	private ArrayList<String> usingClock;
 
-	
 	public void onEnable() {
 	  Bukkit.getPluginManager().registerEvents(this, this);
 	  if (getConfig().getBoolean("magicclock")) { this.usingClock = new ArrayList<String>(); }
