@@ -11,22 +11,36 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class hubmc
-  extends JavaPlugin
-  implements Listener
-{
-  public void onEnable()
-  {
+public class hubmc extends JavaPlugin implements Listener {
+  public void onEnable() {
     saveDefaultConfig();
     Bukkit.getPluginManager().registerEvents(this, this);
   }
-  
+  @EventHandler
+  public void onEntityDamage(EntityDamageEvent e) {
+	  Player p = (Player) e.getEntity();
+      if(e.getEntity() instanceof Player) {
+          e.getCause();
+          if (DamageCause.VOID != null){
+        	  World w = Bukkit.getServer().getWorld(getConfig().getString("spawn.world"));
+              double x = getConfig().getDouble("spawn.x");
+              double y = getConfig().getDouble("spawn.y");
+              double z = getConfig().getDouble("spawn.z");
+              float yaw = (float)getConfig().getDouble("spawn.yaw");
+              float pitch = (float)getConfig().getDouble("spawn.pitch");
+              p.teleport(new Location(w, x, y, z, yaw, pitch));
+              e.setDamage(0);
+          }
+      }
+  }
   @EventHandler
   public void onPlayerJoin(PlayerJoinEvent e)
   {
@@ -104,7 +118,6 @@ public class hubmc
       event.setCancelled(true);
     }
   }
-  
   @EventHandler(priority=EventPriority.HIGHEST)
   public void rain(WeatherChangeEvent e)
   {
