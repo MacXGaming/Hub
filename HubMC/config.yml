@@ -7,4 +7,4 @@ forcespawn: true
 blocked-cmds:
     - op
     
-blocked-cmd-message: "&4This command is blocked!"
+no-perm-message: "&4You don't have permission!"

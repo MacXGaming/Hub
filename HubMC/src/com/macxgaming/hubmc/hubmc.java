@@ -54,7 +54,7 @@ public class hubmc extends JavaPlugin implements Listener {
 				p.sendMessage(ChatColor.GREEN + "Spawn set!");
 				getLogger().info("Hub Spawn set!");
 			}else{
-				p.sendMessage("&cYou dont have the permission");
+				p.sendMessage(getConfig().getString("no-perm-message").replaceAll("&", "§"));
 			}
 		}
 		if(cmd.getName().equalsIgnoreCase("hreload")) {
@@ -65,7 +65,7 @@ public class hubmc extends JavaPlugin implements Listener {
 				getLogger().info("Reloaded the config.yml");
 				return true;
 			}else{
-				p.sendMessage("&cYou dont have the permission");
+				p.sendMessage(getConfig().getString("no-perm-message").replaceAll("&", "§"));
 				return true;
 			}
 		}
@@ -78,7 +78,7 @@ public class hubmc extends JavaPlugin implements Listener {
 			String playercommand = (String)getConfig().getList("blocked-cmds").get(i);
 			if (command.toUpperCase().contains("/" + playercommand.toUpperCase())) {
 				Player p = event.getPlayer();
-				p.sendMessage(getConfig().getString("blocked-cmd-message").replaceAll("&", "§"));
+				p.sendMessage(getConfig().getString("no-perm-message").replaceAll("&", "§"));
 				event.setCancelled(true);
 			}
 		}
