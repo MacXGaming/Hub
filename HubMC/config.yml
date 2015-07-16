@@ -1,13 +1,23 @@
 worlds:
     - world
-weather: true # Do you hate rain?
-nodrop: true # Do you wan't to disable item drop?
-forcespawn: true # Do you wan't to get to spawn every time you log in?
-no-fall-damage: true # Do you wan't no fall damage?
-jumppads: true # Should jumppads be activated?
-magicclock: true # Do you wan't the magic clock?
-doublejump: true #Do you wan't double jump?
-void: true # Do you wan't tp when void?
+# Do you hate rain?
+weather: true
+# Do you wan't to disable item drop?
+nodrop: true
+# Do you wan't to get to spawn every time you log in?
+forcespawn: true
+# Do you wan't no fall damage?
+no-fall-damage: true
+# Should jumppads be activated?
+jumppads: true
+# Do you wan't the magic clock?
+magicclock: true
+#Do you wan't double jump?
+doublejump: true
+# Do you wan't tp when void?
+void: true
+# Do you hate when people can use [TAB]?
+notab: true
 
 JumpPadID: 70 # Stone Plate
 BottomBlockId: 2 # Dirt

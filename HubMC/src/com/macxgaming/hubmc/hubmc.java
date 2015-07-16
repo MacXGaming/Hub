@@ -2,6 +2,7 @@ package com.macxgaming.hubmc;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -32,19 +33,58 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
+import com.comphenix.protocol.events.ListenerPriority;
+import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.reflect.FieldAccessException;
+
 public class hubmc extends JavaPlugin implements Listener {
 	private ArrayList<String> usingClock;
-
+	ProtocolManager protocolManager;
+	
 	public void onEnable() {
 	  Bukkit.getPluginManager().registerEvents(this, this);
 	  if (getConfig().getBoolean("magicclock")) { this.usingClock = new ArrayList<String>(); }
 	  getConfig().options().copyDefaults(true);
 	  saveConfig();
+	  
+	  /***** BLOCK TAB *****/
+	  if (getConfig().getBoolean("notab")) {
+		  this.protocolManager = ProtocolLibrary.getProtocolManager();
+		    this.protocolManager.addPacketListener(new PacketAdapter(this, ListenerPriority.NORMAL, new PacketType[] { PacketType.Play.Client.TAB_COMPLETE })
+		    {
+		      public void onPacketReceiving(PacketEvent event)
+		      {
+		        if (event.getPacketType() == PacketType.Play.Client.TAB_COMPLETE) {
+		          try
+		          {
+		            if (event.getPlayer().hasPermission("hubmc.commandtab.bypass")) {
+		              return;
+		            }
+		            PacketContainer packet = event.getPacket();
+		            String message = ((String)packet.getSpecificModifier(String.class).read(0)).toLowerCase();
+		            if (((message.startsWith("/")) && (!message.contains(" "))) || ((message.startsWith("/ver")) && (!message.contains("  "))) || ((message.startsWith("/version")) && (!message.contains("  "))) || ((message.startsWith("/?")) && (!message.contains("  "))) || ((message.startsWith("/about")) && (!message.contains("  "))) || ((message.startsWith("/help")) && (!message.contains("  ")))) {
+		              event.setCancelled(true);
+		            }
+		          }
+		          catch (FieldAccessException e)
+		          {
+		            getLogger().log(Level.SEVERE, "Couldn't access field.", e);
+		          }
+		        }
+		      }
+		    });
+	  }
 	}
 		 
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent e) {
-		if (getConfig().getBoolean("forcespawn")) {
+		/***** FORCE SPAWN *****/
+		if (getConfig().getBoolean("forcespawn") && (!e.getPlayer().hasPermission("hubmc.fs.no"))) {
 			Player p = e.getPlayer();
 			if (getConfig().getConfigurationSection("spawn") == null) {
 				p.sendMessage(ChatColor.RED + "The spawn has not yet been set!");
@@ -58,6 +98,7 @@ public class hubmc extends JavaPlugin implements Listener {
 				p.teleport(new Location(w, x, y, z, yaw, pitch));
 			}
 		}
+		/***** MAGIC CLOCK *****/
 		if (getConfig().getBoolean("magicclock") && (e.getPlayer().hasPermission("hubmc.use"))) {
 	        ItemStack magicClock = new ItemStack(Material.WATCH, 1);
 	       
@@ -117,7 +158,7 @@ public class hubmc extends JavaPlugin implements Listener {
 		if((!event.getPlayer().hasPermission("hubmc.block.override"))) {
 			String command = event.getMessage();
 			for (int i = 0; i < getConfig().getList("blocked-cmds").size(); i++) {
-				String playercommand = (String)getConfig().getList("blocked-cmds").get(i);
+				String playercommand = (String)getConfig().getList("blocked-cmds").get(i);				
 				if (command.toUpperCase().contains("/" + playercommand.toUpperCase())) {
 					Player p = event.getPlayer();
 					p.sendMessage(getConfig().getString("no-perm-message").replaceAll("&", "§"));
@@ -255,5 +296,5 @@ public class hubmc extends JavaPlugin implements Listener {
 		      player.setFlying(false);
 		      player.setVelocity(player.getLocation().getDirection().multiply(1.6D).setY(1.0D));
 		  }
-	  }
+	  }  
 }
