@@ -1,5 +1,6 @@
-worlds:
-    - world
+rain:
+    world: false
+    hub: false
 weather: true
 nodrop: true
 forcespawn: true
@@ -10,7 +11,7 @@ doublejump: true
 void: true
 notab: true
 block-all-commands: true
-blocked-cmd: true
+blocked-cmd: false
 
 JumpPadID: 70 # Stone Plate
 BottomBlockId: 152 # Dirt
@@ -25,3 +26,10 @@ hide-players-message: "&4Players are invisible!"
 blocked-cmds:
     - op
 no-perm-message: "&4You don't have permission!"
+spawn:
+  world: hub
+  x: 0.5
+  y: 65.0
+  z: 0.5
+  yaw: 0.9000001
+  pitch: 0.89987683

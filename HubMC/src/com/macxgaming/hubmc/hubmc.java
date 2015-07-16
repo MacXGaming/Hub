@@ -1,7 +1,6 @@
 package com.macxgaming.hubmc;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
@@ -32,7 +31,6 @@ import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.Vector;
 
 import com.comphenix.protocol.PacketType;
@@ -53,7 +51,7 @@ public class hubmc extends JavaPlugin implements Listener {
 	  if (getConfig().getBoolean("magicclock")) { this.usingClock = new ArrayList<String>(); }
 	  getConfig().options().copyDefaults(true);
 	  saveConfig();
-	  
+	  rainCheck();
 	  /***** BLOCK TAB *****/
 	  if (getConfig().getBoolean("notab")) {
 		  this.protocolManager = ProtocolLibrary.getProtocolManager();
@@ -167,6 +165,7 @@ public class hubmc extends JavaPlugin implements Listener {
 				}
 			}
 		}
+		/***** BLOCKED ALL CMD *****/
 		if((getConfig().getBoolean("block-all-commands")) && (!event.getPlayer().hasPermission("hubmc.block.override"))) {
 			Player p = event.getPlayer();
 			p.sendMessage(getConfig().getString("no-perm-message").replaceAll("&", "§"));
@@ -190,19 +189,40 @@ public class hubmc extends JavaPlugin implements Listener {
 		}
 	}
 	/***** NO RAIN *****/
-	@EventHandler(priority=EventPriority.HIGHEST)
-	public void rain(WeatherChangeEvent e) {
-		if ((getConfig().getBoolean("weather")) && (e.toWeatherState())) {
-			List<String> worlds = getConfig().getStringList("worlds");
-			for (String w : worlds) {
-				World world = Bukkit.getServer().getWorld(w);
-				if (e.getWorld().equals(w)) {
-					e.setCancelled(true);
-					world.setStorm(false);
-				}
-			}
-		}
-	}
+	@EventHandler(priority=EventPriority.HIGH)
+	  public void onWeatherChange(WeatherChangeEvent e)
+	  {
+	    final World w = e.getWorld();
+	    if ((!getConfig().getBoolean("rain." + w.getName())) && 
+	      (!w.hasStorm())) {
+	      e.setCancelled(true);
+	    }
+	    Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable()
+	    {
+	      public void run()
+	      {
+	        try
+	        {
+	          if ((!getConfig().getBoolean("rain." + w.getName())) && 
+	            (w.hasStorm())) {
+	            w.setStorm(false);
+	          }
+	        }
+	        catch (Exception localException) {}
+	      }
+	    }, 5L);
+	  }
+	private void rainCheck()
+	  {
+	    for (World w : getServer().getWorlds()) {
+	      if (!getConfig().getBoolean("rain." + w.getName())) {
+	        if (w.hasStorm()) {
+	          w.setStorm(false);
+	        }
+	      }
+	    }
+	  }
+	  
 	/***** MAGIC CLOCK *****/
 	@EventHandler
 	public void onPlayerInteract(PlayerInteractEvent e) {
