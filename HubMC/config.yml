@@ -1,30 +1,23 @@
 worlds:
     - world
-# Do you hate rain?
 weather: true
-# Do you wan't to disable item drop?
 nodrop: true
-# Do you wan't to get to spawn every time you log in?
 forcespawn: true
-# Do you wan't no fall damage?
 no-fall-damage: true
-# Should jumppads be activated?
 jumppads: true
-# Do you wan't the magic clock?
 magicclock: true
-#Do you wan't double jump?
 doublejump: true
-# Do you wan't tp when void?
 void: true
-# Do you hate when people can use [TAB]?
 notab: true
+block-all-commands: true
+blocked-cmd: true
 
 JumpPadID: 70 # Stone Plate
-BottomBlockId: 2 # Dirt
+BottomBlockId: 152 # Dirt
 VelocityMultiplier: 3 
-clockitemname: "&4Magic Clock" # ClockName
-clockslot: 5 # What slot to be in? 0-xx
-voidY: 10 # Y, when should we TP a player?
+clockitemname: "&2Magic Clock" # ClockName
+clockslot: 4 # What slot to be in? 0-xx
+voidY: 25 # Y, when should we TP a player?
 
 show-players-message: "&2Players are visible!"
 hide-players-message: "&4Players are invisible!"

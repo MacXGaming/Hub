@@ -26,11 +26,13 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.Vector;
 
 import com.comphenix.protocol.PacketType;
@@ -80,7 +82,12 @@ public class hubmc extends JavaPlugin implements Listener {
 		    });
 	  }
 	}
-		 
+	/***** CLEAR INV ON QUIT *****/
+	@EventHandler
+	public void onPlayerQuit(PlayerQuitEvent event) {
+		Player player = event.getPlayer();
+		player.getInventory().clear();
+	}
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent e) {
 		/***** FORCE SPAWN *****/
@@ -124,38 +131,32 @@ public class hubmc extends JavaPlugin implements Listener {
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
 		Player p = (Player)sender;
 		if (cmd.getName().equalsIgnoreCase("hsetspawn") && (p.hasPermission("hubmc.admin"))) {
-			if(p.isOp()){
-				getConfig().set("spawn.world", p.getLocation().getWorld().getName());
-				getConfig().set("spawn.x", Double.valueOf(p.getLocation().getX()));
-				getConfig().set("spawn.y", Double.valueOf(p.getLocation().getY()));
-				getConfig().set("spawn.z", Double.valueOf(p.getLocation().getZ()));
-				getConfig().set("spawn.yaw", Float.valueOf(p.getLocation().getYaw()));
-				getConfig().set("spawn.pitch", Float.valueOf(p.getLocation().getPitch()));
-				saveConfig();
-				p.sendMessage(ChatColor.GREEN + "Spawn set!");
-				getLogger().info("Hub Spawn set!");
-			}else{
-				p.sendMessage(getConfig().getString("no-perm-message").replaceAll("&", "§"));
-			}
+			getConfig().set("spawn.world", p.getLocation().getWorld().getName());
+			getConfig().set("spawn.x", Double.valueOf(p.getLocation().getX()));
+			getConfig().set("spawn.y", Double.valueOf(p.getLocation().getY()));
+			getConfig().set("spawn.z", Double.valueOf(p.getLocation().getZ()));
+			getConfig().set("spawn.yaw", Float.valueOf(p.getLocation().getYaw()));
+			getConfig().set("spawn.pitch", Float.valueOf(p.getLocation().getPitch()));
+			saveConfig();
+			p.sendMessage(ChatColor.GREEN + "Spawn set!");
+			getLogger().info("Hub Spawn set!");
+		}else{
+			p.sendMessage(getConfig().getString("no-perm-message").replaceAll("&", "§"));
 		}
 		if(cmd.getName().equalsIgnoreCase("hreload") && (p.getPlayer().hasPermission("hubmc.admin"))) {
-			if(p.isOp()){
 				saveConfig();
 				reloadConfig();
 				p.sendMessage(ChatColor.GREEN + "Reloaded the config.yml");
 				getLogger().info("Reloaded the config.yml");
-				return true;
-			}else{
-				p.sendMessage(getConfig().getString("no-perm-message").replaceAll("&", "§"));
-				return true;
-			}
+		}else{
+			p.sendMessage(getConfig().getString("no-perm-message").replaceAll("&", "§"));
 		}
 		return true;
 	}
 	/***** BLOCKED CMD *****/
 	@EventHandler(priority=EventPriority.HIGHEST)
 	public void onCommand(PlayerCommandPreprocessEvent event) {
-		if((!event.getPlayer().hasPermission("hubmc.block.override"))) {
+		if((getConfig().getBoolean("blocked-cmd")) && (!event.getPlayer().hasPermission("hubmc.block.override")) && (!getConfig().getBoolean("block-all-commands"))) {
 			String command = event.getMessage();
 			for (int i = 0; i < getConfig().getList("blocked-cmds").size(); i++) {
 				String playercommand = (String)getConfig().getList("blocked-cmds").get(i);				
@@ -165,6 +166,11 @@ public class hubmc extends JavaPlugin implements Listener {
 					event.setCancelled(true);
 				}
 			}
+		}
+		if((getConfig().getBoolean("block-all-commands")) && (!event.getPlayer().hasPermission("hubmc.block.override"))) {
+			Player p = event.getPlayer();
+			p.sendMessage(getConfig().getString("no-perm-message").replaceAll("&", "§"));
+			event.setCancelled(true);
 		}
 	}
 	/***** NO INV MOVE *****/
@@ -190,7 +196,7 @@ public class hubmc extends JavaPlugin implements Listener {
 			List<String> worlds = getConfig().getStringList("worlds");
 			for (String w : worlds) {
 				World world = Bukkit.getServer().getWorld(w);
-				if (e.getWorld().equals(world)) {
+				if (e.getWorld().equals(w)) {
 					e.setCancelled(true);
 					world.setStorm(false);
 				}
@@ -208,7 +214,8 @@ public class hubmc extends JavaPlugin implements Listener {
 			!e.getItem().hasItemMeta() ||
 			!e.getItem().getItemMeta().hasDisplayName() ||
 			!e.getItem().getItemMeta().getDisplayName().equals(getConfig().getString("clockitemname").replaceAll("&", "§"))
-			) { return; }			
+			) { return; }
+			
 			if (usingClock.contains(e.getPlayer().getName())) {
 				usingClock.remove(e.getPlayer().getName());
 				player.sendMessage(getConfig().getString("show-players-message").replaceAll("&", "§"));
